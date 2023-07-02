@@ -1,4 +1,3 @@
-# B
 ## This repository is specially for repeating our analysis
 Thanks for your visit!
 
