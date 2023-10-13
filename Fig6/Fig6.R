@@ -1,5 +1,3 @@
-
-######Fig.6A
 library(Seurat)
 library(SeuratData)
 library(patchwork)
@@ -12,9 +10,14 @@ library(ggplot2)
 library(rsvd)
 library(clusterProfiler)
 
+###############################################################################
+#'                       Manuscipt: figure6A                                 '#
+###############################################################################
+
+
 Idents(objN)="celltype_l3";table(Idents(objN))
 objectTP=subset(objN,idents=c("B_c08_ITGB1_SwBm",   "B_c09_DUSP4_AtM"))
-####提取细胞
+####
 set.seed(100)
 input.num = 10000
 cellid<-sample(1:ncol(objectTP), input.num, replace=F); length(cellid)
@@ -22,7 +25,7 @@ objectTPN<-objectTP[,cellid]
 dim(objectTPN)
 
 #devtools::install_github("YosefLab/VISION@v2.1.0")
-# 设置参数，对 method 和 metabolism.type 做选择
+# 
 countexp.Seurat <- sc.metabolism.Seurat(obj = objectTPN, 
                                         method = "AUCell", # supports VISION, AUCell, ssgsea, and gsva, which VISION is the default method.
                                         imputation = F, ncores = 10, 
@@ -143,14 +146,14 @@ p1= pheatmap::pheatmap(vag_exp4,cutree_cols = 5 ,
                        #color = colorRampPalette(c("#ff59ff", "#080704", "#fffb06"))(40), #seurat color
                        #color = c(colorRampPalette(colors = c("#ff59ff","#080704"))(length(40)/2),colorRampPalette(colors = c("#080704","#fffb06"))(length(40)/2)),
                        #colorRampPalette(brewer.pal(9, "RdYIBu"))(50),
-                       border=FALSE,#去掉边界
+                       border=FALSE,#
                        cellwidth = 20,
                        cellheight = 8,
                        fontsize = 8,
                        gaps_col = c(1,2,3,4,5,6,7,8#,9,10,11#,12,
                                     #13,14,15,16,17,18,19,20,
                                     #21,22,23,24,25,26,27,28,29,30
-                       )#在每一列加空格
+                       )#
 );p1
 dev.off()
 
