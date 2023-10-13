@@ -183,7 +183,7 @@ for(i in 1:length(feature_type)){
   DimPlot(objTN2,group.by = "seurat_clusters",label=T,cols = my36colors)
 
 ###############################################################################
-#'                          Manuscipt: figure1D                              '#
+#'                          Manuscipt: figure1C                              '#
 ###############################################################################
 B_marker= c("TCL1A","FCER2","IL4R","IGHD" , ####NaiveB
             "IFIT3","IFI44L","STAT1","ISG15",###IFN
