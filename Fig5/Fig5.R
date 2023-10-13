@@ -1,6 +1,145 @@
 
 
-#####################
+library(psych)
+library(igraph)
+library(qgraph)
+library(tidyverse)
+library(ggsci)
+library(cpplot)
+library(Matrix)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+library(Matrix.utils)
+library(data.table)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(Biobase)
+#harmony
+library(Seurat)
+library(cowplot)
+library(harmony)
+library(SeuratWrappers)
+
+library(reshape2)
+library(BayesPrism)
+library(glue)
+library(Matrix.utils)
+library(stCancer)
+library(grid)
+set.seed(12345)
+
+###############################################################################
+#'                     Manuscipt: figureS11A&B                               '#
+###############################################################################
+obj.cd45 <- readRDS("obj_cd45_matched 20230423.rds")
+
+DimPlot(obj.cd45, reduction = "umap", label = TRUE, pt.size = .1, group.by = "celltype_l1", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+DimPlot(obj.cd45, reduction = "umap", label = TRUE, pt.size = .1, group.by = "celltype_l2", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+unique(obj.cd45$celltype_l1)
+obj.cd45 = subset(obj.cd45, celltype_l1 != "Cycling")
+obj.cd45 = subset(obj.cd45, celltype_l1 != "Doublet")
+obj.cd45 = subset(obj.cd45, nCount_RNA < 5000)
+obj.cd45 = subset(obj.cd45, nCount_RNA > 500)
+obj.cd45 = subset(obj.cd45, nFeature_RNA > 500)
+
+
+obj.cd45[["percent.mt"]] <- PercentageFeatureSet(obj.cd45, pattern = "^MT-")
+quantile(obj.cd45$percent.mt)
+obj.cd45 = subset(obj.cd45, percent.mt<10)
+
+quantile(obj.cd45$nCount_RNA)
+quantile(obj.cd45$nFeature_RNA)
+
+
+DimPlot(obj.cd45, reduction = "umap", label = TRUE, pt.size = .1, group.by = "celltype_l1", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+
+table.orig.ident = data.frame(table(obj.cd45$orig.ident))
+
+obj.cd45  = FindVariableFeatures(obj.cd45, nfeatures = 1000)
+
+varablegene = VariableFeatures(obj.cd45)
+
+s.genes <- cc.genes$s.genes; g2m.genes <- cc.genes$g2m.genes
+obj.cd45 <- CellCycleScoring(obj.cd45, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+obj.cd45 <- ScaleData(obj.cd45, vars.to.regress = c("S.Score", "G2M.Score"), features = varablegene)
+
+# obj.cd45 <- ScaleData(obj.cd45)
+obj.cd45 <- RunPCA(obj.cd45, verbose = FALSE, features = varablegene)
+
+table(obj.cd45$orig.ident)
+obj.cd45 <- obj.cd45 %>% 
+  RunHarmony("orig.ident", plot_convergence = TRUE)
+
+harmony_embeddings <- Embeddings(obj.cd45, 'harmony')
+harmony_embeddings[1:5, 1:5]
+
+obj.cd45 <- obj.cd45 %>% 
+  RunUMAP(reduction = "harmony", dims = 1:20) %>% 
+  FindNeighbors(reduction = "harmony", dims = 1:20) 
+
+
+obj.cd45 <- obj.cd45 %>%  RunTSNE(reduction = "harmony", dims = 1:30)
+
+DimPlot(obj.cd45, reduction = "umap", label = TRUE, pt.size = .1, group.by = "celltype_l1", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+DimPlot(obj.cd45, reduction = "umap", label = TRUE, pt.size = .1, group.by = "celltype_l2", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+DimPlot(obj.cd45, reduction = "tsne", label = TRUE, pt.size = .1, group.by = "celltype_l2", cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+DimPlot(obj.cd45, reduction = "tsne", label = TRUE, pt.size = .1, group.by = c("celltype_l1","celltype_l2","type","cancer"), ncol = 2, cols = my36colors, label.size = 0, raster = F) & 
+  theme_bw() & theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+
+
+input.genes<-c(#"PTPRC", #CD45
+  "KLRF1", #NK
+  "GZMK",
+  "GZMB",
+  "FCGR3B", #Neu
+  "S100A9",
+  "SLC4A10",
+  "LYZ", #Myeloid
+  "SPP1",
+  "MRC1",
+  "HSPA5",
+  "CCL18",
+  "SELL",
+  "CD8A", #CD8
+  "IFIT1",
+  "CCL5",
+  "CTLA4",
+  "PDCD1",
+  "FOXP3",
+  "GPR183",
+  "CCL7",
+  "CD79A"#B)
+
+
+meta_tmp = subset(obj.cd45@meta.data, !is.na(obj.cd45@meta.data$celltype_l2))
+obj.cd45 = obj.cd45[,row.names(meta_tmp)]
+obj.cd45 = subset(obj.cd45, celltype_l2 != "Doublet")
+
+
+obj.cd45 = ScaleData(obj.cd45, features = input.genes)
+Idents(obj.cd45) = obj.cd45$celltype_l2
+# DotPlot(obj.cd45, features = input.genes, cols = c("lightgrey", "#FF4500")) + ggplot2::coord_flip() +RotatedAxis()
+dittoSeq::dittoDotPlot(obj.cd45, vars = input.genes, group.by = "celltype_l2", scale = FALSE)
+
+
+###############################################################################
+#'                     Manuscipt: figureS11E&F                               '#
+###############################################################################
+
 Idents(cd45)="celltype_l4";table(Idents(cd45))
 cd45=subset(cd45,idents=c("B","Doublet"),invert=TRUE)
 
@@ -9,13 +148,13 @@ input.num = 10000
 cellid<-sample(1:ncol(cd45), input.num, replace=F); length(cellid)
 cd45N<-cd45[,cellid]
 dim(cd45N)
-saveRDS(cd45N,file="/home/data/vip13t45/project/PC/PC_scRNA_B/CD45/CD45/cd45N 1w 20230526.rds")
+saveRDS(cd45N,file="cd45N 1w 20230526.rds")
 
 
 write.table(as.matrix(cd45N@assays$RNA@data), './cellphoneDB/cellphonedb_count.txt', sep='\t', quote=F)
 meta_data <- cbind(rownames(cd45N@meta.data), cd45N@meta.data[,'celltype_l4', drop=F])  
 meta_data <- as.matrix(meta_data)
-meta_data[is.na(meta_data)] = "Unkown" #  细胞类型中不能有NA
+meta_data[is.na(meta_data)] = "Unkown" 
 
 write.table(meta_data, './cellphoneDB/cellphonedb_meta.txt', sep='\t', quote=F, row.names=F)
 
@@ -23,8 +162,64 @@ write.table(meta_data, './cellphoneDB/cellphonedb_meta.txt', sep='\t', quote=F, 
 cellphonedb method statistical_analysis  cellphonedb_meta.txt  cellphonedb_count.txt      --counts-data=gene_name  --database out/cellphonedb_user_2023-05-24-08_46.db 
 cellphonedb plot dot_plot --means-path ./out/means.txt --pvalues-path ./out/pvalues.txt --output-path ./Outplot
 
-#######
-sel_pval = all_pval[match(selected_pairs, intr_pairs), selected_celltype]#将上述需要呈现的受配体选出来
+#########################
+
+#
+all_pval = read.table("./cellphoneDB/out/230524/pvalues.txt", header=T, stringsAsFactors = F, sep='\t', comment.char = '', check.names=F)
+all_means = read.table('./cellphoneDB/out/230524/means.txt', header=T, stringsAsFactors = F, sep='\t', comment.char = '', check.names=F)
+#
+intr_pairs = all_pval$interacting_pair
+all_pval = all_pval[,-c(1:11)]
+all_means = all_means[,-c(1:11)]
+
+#
+selected_celltype = c("B_c09_DUSP4_AtM|CD4_PDCD1","B_c08_ITGB1_SwBm|CD4_PDCD1",
+                      "B_c09_DUSP4_AtM|CD8_CTLA4","B_c08_ITGB1_SwBm|CD8_CTLA4",
+                      "B_c09_DUSP4_AtM|CD4_FOXP3", "B_c08_ITGB1_SwBm|CD4_FOXP3",
+                      "B_c09_DUSP4_AtM|CD8_IFI","B_c08_ITGB1_SwBm|CD8_IFI"
+)
+
+selected_celltype = c("B_c09_DUSP4_AtM|CD4_PDCD1","B_c09_DUSP4_AtM|CD8_CTLA4"
+)
+
+#-------------------------------------------------------------------------------------------
+#
+sig_pairs <- all_pval
+sig_pairs <- sig_pairs[,-c(1, 3:11)]
+sig_pairs <- sig_pairs[which(rowSums(sig_pairs<=0.05)!=0), ]
+dim(sig_pairs)
+
+##############
+sub_sig_pairs <- sig_pairs[which(rowSums(sig_pairs<=0.05)> 100), ]#
+dim(sub_sig_pairs)
+
+sub_sig_pairs
+#
+selected_pairs = sub_sig_pairs$interacting_pair
+
+selected_pairs=c("LGALS9_CD47",
+                 "LGALS9_SLC1A5",
+                 
+                 "LGALS9_SORL1",
+                 "APP_SORL1",
+                 "LAMP1_FAM3C",
+                 "COL9A3_a1b1 complex",
+                 "COL9A2_a1b1 complex",
+                 
+                 "ADGRG5_FAM3C",
+                 "TNFRSF1B_GRN",
+                 "CXCR3_CCL20",
+                 "TNFRSF10A_TNFSF10",
+                 "CD40_CD40LG",
+                 "TNF_VSIR",
+                 "PTPRC_SEMA4D",
+                 "CD72_SEMA4D",
+                 "IL21 receptor_IL21")
+
+
+#-------------------------------------------------------------------------------------------
+#
+sel_pval = all_pval[match(selected_pairs, intr_pairs), selected_celltype]#
 sel_means = all_means[match(selected_pairs, intr_pairs), selected_celltype]
 df_names = expand.grid(selected_pairs, selected_celltype)
 pval = unlist(sel_pval)
@@ -37,7 +232,7 @@ plot.data$clusters <- gsub('[|]', '_', plot.data$clusters)
 
 #-------------------------------------------------------------------------------------------
 
-#设置颜色+作图
+#
 plot.data$clusters=factor(plot.data$clusters,levels = c("B_c08_ITGB1_SwBm_CD8_IFI","B_c09_DUSP4_AtM_CD8_IFI",
                                                         "B_c08_ITGB1_SwBm_CD4_FOXP3", "B_c09_DUSP4_AtM_CD4_FOXP3", 
                                                         "B_c08_ITGB1_SwBm_CD8_CTLA4", "B_c09_DUSP4_AtM_CD8_CTLA4",
@@ -61,73 +256,126 @@ ggplot(plot.data,aes(x=clusters,y=pair)) +
         panel.border = element_rect(size = 0.7, linetype = "solid", colour = "black"))
 ggsave("./cellphoneDB/Figure/dotplot.pdf",width = 10,height = 5)
 
+###############################################################################
+#'                                  BayesPrism                               '#
+###############################################################################
+source("./BayesPrism_function.R")
 
+file <- list.files("./TCGAnew/")
+file
+file <- file[c(2:34)]
 
-##########nichenet
+####scRNA data
+sc.dat <- readRDS("obj_cd45_matched 20230423.rds")
+dim(sc.dat)
+anno <- sc.dat@meta.data
+unique(sc.dat$celltype_l4)
+Idents(sc.dat) <- sc.dat$celltype_l4
+anno <- anno[anno$celltype_l4%in%c("B_10_PSME2_PreGC","B_c06_NR4A2_ACB2","NEU",           
+                                   "CD8_GZMK_CCL5","B_01_TCL1A_naïveB", "Macro_MRC1",       
+                                   "NK_GZMB","B_c08_ITGB1_SwBm" , "B_c09_DUSP4_AtM","CD4_PDCD1" ,       
+                                   "B_02_IFIT3_B" ,"MAIT_SLC4A10" ,"CD4_FOXP3",             
+                                   "B_14_MZB1_rASC" ,"B_c07_CCR7_ACB3"  , "CD8CD4_SELL","NK_GZMK",         
+                                   "B_c05_EGR1_ACB1","B_c03_HSP_B" ,"CD4_CCL7_GPR183" ,  "CD8_CTLA4",     
+                                   "CD8_IFI"  ,"B_12_LMO2_LZGC" ,   "B_13_STMN1_PB"  ,  
+                                   "Mono_S100A9" ,"B_11_CXCR4_DZGC",   "Macro_CCL18" ,"Macro_HSP",        
+                                   "B_c04_MT1X_B" ,"Macro_SPP1" ,"Cycling"),]
+sc.dat <- sc.dat[,rownames(anno)]
+dim(sc.dat)
+Idents(sc.dat) <- sc.dat$celltype_l4
+sc.dat <- subset(sc.dat,downsample=200)
+dim(sc.dat)
+table(sc.dat$celltype_l4)
+anno <- sc.dat@meta.data
+sc.dat <- GetAssayData(sc.dat@assays$RNA,slot = "counts")
+sc.dat <- as.matrix(t(sc.dat))
+head(rownames(sc.dat))
+head(colnames(sc.dat))
+gc()
 
-library(nichenetr)
-library(Seurat)
-library(tidyverse)
+cell.type.labels <- anno$celltype_l4
+sort(table(cell.type.labels))
+cell.state.labels <- anno$celltype_l4
+sort(table(cell.state.labels))
 
-ligand_target_matrix <- readRDS("../PC_scRNA_B//Nichenet/ligand_target_matrix.rds")
-lr_network = readRDS("../PC_scRNA_B//Nichenet/lr_network.rds")
-weighted_networks = readRDS("../PC_scRNA_B//Nichenet/weighted_networks.rds")
-scRNA <- UpdateSeuratObject(cd45)
-head(scRNA)
-head(scRNA@meta.data)
-Idents(scRNA) <- "celltype_l4"
-nichenet_output = nichenet_seuratobj_aggregate(seurat_obj = scRNA, 
-                                               top_n_ligands = 50,
-                                               receiver = c("B_c08_ITGB1_SwBm"), 
-                                               sender = c( "CD4_PDCD1"),
-                                               condition_colname = "type", 
-                                               condition_oi = "Cancer", 
-                                               condition_reference = "Adjacent", 
-                                               ligand_target_matrix = ligand_target_matrix, 
-                                               lr_network = lr_network, 
-                                               weighted_networks = weighted_networks, 
-                                               organism = "human")
+###QC of cell type and state labels
+plot.cor.phi (input=sc.dat,
+              input.labels=cell.state.labels,
+              title="cell state correlation",
+              #specify pdf.prefix if need to output to pdf
+              #pdf.prefix="gbm.cor.cs", 
+              cexRow=0.2, cexCol=0.2,
+              margins=c(2,2))
 
-nichenet_output = nichenet_seuratobj_aggregate(seurat_obj = scRNA, 
-                                               top_n_ligands = 50,
-                                               receiver = c("B_c09_DUSP4_AtM"), 
-                                               sender = c( "CD4_PDCD1"),
-                                               condition_colname = "type", 
-                                               condition_oi = "Cancer", 
-                                               condition_reference = "Adjacent", 
-                                               ligand_target_matrix = ligand_target_matrix, 
-                                               lr_network = lr_network, 
-                                               weighted_networks = weighted_networks, 
-                                               organism = "human")
+plot.cor.phi (input=sc.dat, 
+              input.labels=cell.type.labels, 
+              title="cell type correlation",
+              #specify pdf.prefix if need to output to pdf
+              #pdf.prefix="gbm.cor.ct",
+              cexRow=0.5, cexCol=0.5,
+)
 
+#Filter outlier genes
+sc.stat <- plot.scRNA.outlier(
+  input=sc.dat, #make sure the colnames are gene symbol or ENSMEBL ID 
+  cell.type.labels=cell.type.labels,
+  species="hs", #currently only human(hs) and mouse(mm) annotations are supported
+  return.raw=TRUE #return the data used for plotting. 
+  #pdf.prefix="gbm.sc.stat" specify pdf.prefix if need to output to pdf
+)
+head(sc.stat) 
+
+sc.dat.filtered <- cleanup.genes (input=sc.dat,
+                                  input.type="count.matrix",
+                                  species="hs", 
+                                  gene.group=c( "Rb","Mrp","other_Rb","chrM","MALAT1","chrX","chrY") ,
+                                  exp.cells=5)
+
+dim(sc.dat.filtered)
+
+sc.dat.filtered.pc <-  select.gene.type (sc.dat.filtered,
+                                         gene.type = "protein_coding")
+
+diff.exp.stat <- get.exp.stat(sc.dat=sc.dat[,colSums(sc.dat>0)>3],# filter genes to reduce memory use
+                              cell.type.labels=cell.type.labels,
+                              cell.state.labels=cell.state.labels,
+                              psuedo.count=0.1, #a numeric value used for log2 transformation. =0.1 for 10x data, =10 for smart-seq. Default=0.1.
+                              cell.count.cutoff=50, # a numeric value to exclude cell state with number of cells fewer than this value for t test. Default=50.
+                              n.cores=1 #number of threads
+)
+
+sc.dat.filtered.pc.sig <- select.marker (sc.dat=sc.dat.filtered.pc,
+                                         stat=diff.exp.stat,
+                                         pval.max=0.01,
+                                         lfc.min=0.1)
+dim(sc.dat.filtered.pc.sig)
+gc()
+
+save.image("./BayesPrism/scdata_allimmune.RData")
+
+for(i in 1:length(file)){
+  load(paste0("./TCGAnew/",file[i]))
+  dim(exp)
+  exp[1:5,1:5]
+  ls()
+  
+  exp <- t(exp)
+  bk.dat <- exp
+  head(rownames(bk.dat))
+  head(colnames(bk.dat))
+  
+  bp.res <- BayesPrism(bk.dat,sc.dat,cell.state.labels,cell.type.labels)
+  
+  save(bp.res, file=paste0("./BayesPrism/bp.res.allimmune.",file[i]))
+  rm(bp.res)
+  gc()
+}
+
+###############################################################################
+#'                     Manuscipt: figure5I                                   '#
+###############################################################################
 
 ###########ST
-
-library(glue, lib.loc = "/usr/local/lib/R/site-library")
-library(Seurat)
-library(ggplot2)
-library(patchwork)
-library(dplyr)
-
-library(Seurat)
-library(ggplot2)
-library(patchwork)
-library(dplyr)
-library(tidyr)
-library(Matrix.utils)
-library(data.table)
-library(clusterProfiler)
-library(org.Hs.eg.db)
-
-library(Seurat)
-library(cowplot)
-library(harmony)
-library(SeuratWrappers)
-library(stCancer)
-library(grid)
-
-
-setwd("/www/data/PC")
 
 my36colors <-c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3', '#476D87',
                '#E95C59', '#E59CC4', '#AB3282', '#23452F', '#BD956A', '#8C549C', '#585658',
@@ -136,8 +384,6 @@ my36colors <-c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3',
                '#712820', '#DCC1DD', '#CCE0F5',  '#CCC9E6', '#625D9E', '#68A180', '#3A6963',
                '#968175'
 )
-
-
 
 ###########
 #batch check

@@ -59,7 +59,7 @@ DotPlot.metabolism(obj = countexp.Seurat, pathway = input.pathway, phenotype = "
   )))
 
 
-###############提取gene绘图
+###############
 
 input.pathway<-c("beta-Alanine metabolism","Pyrimidine metabolism" ,"Purine metabolism","Thiamine metabolism","Tyrosine metabolism","Phenylalanine metabolism",
                  "Other types of O-glycan biosynthesis","Glycosaminoglycan biosynthesis - keratan sulfate" ,"N-Glycan biosynthesis","Mucin type O-glycan biosynthesis",
@@ -72,11 +72,11 @@ input.pathway<-c("beta-Alanine metabolism","Pyrimidine metabolism" ,"Purine meta
                  "Sphingolipid metabolism","D-Glutamine and D-glutamate metabolism"
 )
 top10$gene
-# 加载gmt文件
+# 
 kegg_geneset <- clusterProfiler::read.gmt("~/R/x86_64-pc-linux-gnu-library/4.2/scMetabolism/data/KEGG_metabolism_nc.gmt")
 Reac_geneset <- clusterProfiler::read.gmt("~/R/x86_64-pc-linux-gnu-library/4.2/scMetabolism/data/REACTOME_metabolism.gmt")
 
-# 提取目标通路基因
+# 
 kegg_gene <- subset(kegg_geneset, term %in% input.pathway) %>% .$gene %>% as.vector(.)
 
 reac_gene <- subset(Reac_geneset, term %in% top10$gene) %>% .$gene %>% as.vector(.)
@@ -89,10 +89,10 @@ meta_gene=meta_gene[!duplicated(meta_gene)]
 obj_random2w$type_stype=paste0(obj_random2w$type,"_",obj_random2w$stype)
 Idents(objectTPN) = "type_celltype";table(Idents(objectTPN))
 
-###多线程计算marker gene.包含IG基因
+###
 library(future)
 plan("multicore", workers =1)
-#每个线程多少G内存，每个分配2G的内存，为什么设置2G？设置大一些为好，
+#
 options(future.globals.maxSize = 10000 * 1024^2)
 
 diffpath_gene= Seurat::FindAllMarkers(objectTPN, only.pos = TRUE, min.pct = 0,logfc.threshold = 0)
@@ -156,7 +156,7 @@ dev.off()
 
 
 
-#########癌种差异######
+###############
 
 input.pathway<-c("D-Glutamine and D-glutamate metabolism","Sphingolipid metabolism","Arachidonic acid metabolism")
 input.pathway<-rownames(significance_pathway)
