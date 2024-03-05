@@ -17,7 +17,7 @@ p2
 proj$pathway <- gsub("\\d","",proj$Sample)
 unique(proj$pathway)
 proj$pathway <- ifelse(proj$pathway %in%
-                         c("COAD","STAD","GIST","BLCA"),"GC","EF")
+                         c("COAD","LC","STAD","THCA"),"GC","EF")
 table(proj$pathway)
 batchname <- paste0(proj$pathway, "_", proj$Clusters2)
 projHeme5$pathway <- batchname

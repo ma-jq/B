@@ -1,3 +1,5 @@
+
+
 library(Seurat)
 library(SeuratData)
 library(patchwork)
@@ -11,12 +13,11 @@ library(rsvd)
 library(clusterProfiler)
 
 ###############################################################################
-#'                       Manuscipt: figure6A                                 '#
+#'                          Manuscipt: figure6A                             '#
 ###############################################################################
-
-
-Idents(objN)="celltype_l3";table(Idents(objN))
-objectTP=subset(objN,idents=c("B_c08_ITGB1_SwBm",   "B_c09_DUSP4_AtM"))
+objN <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+Idents(objN)="celltype";table(Idents(objN))
+objectTP=subset(objN,idents=c("B.08.ITGB1+SwBm",   "B.09.DUSP4+AtM"))
 ####
 set.seed(100)
 input.num = 10000
@@ -25,7 +26,7 @@ objectTPN<-objectTP[,cellid]
 dim(objectTPN)
 
 #devtools::install_github("YosefLab/VISION@v2.1.0")
-# 
+
 countexp.Seurat <- sc.metabolism.Seurat(obj = objectTPN, 
                                         method = "AUCell", # supports VISION, AUCell, ssgsea, and gsva, which VISION is the default method.
                                         imputation = F, ncores = 10, 
@@ -35,18 +36,18 @@ saveRDS(countexp.Seurat,file = "./scMetabolism/countexp.Seurat for AtM and Bm.rd
 
 
 countexp.Seurat$type_celltype=paste0(countexp.Seurat$type,"_",countexp.Seurat$celltype_l3);table(countexp.Seurat$type_celltype)
-countexp.Seurat$type_celltype=factor(countexp.Seurat$type_celltype,levels = c("Blood_B_c08_ITGB1_SwBm" ,    "Blood_B_c09_DUSP4_AtM",
-                                                                              "Adjacent_B_c08_ITGB1_SwBm",  "Adjacent_B_c09_DUSP4_AtM",
-                                                                              "LN_Met_B_c08_ITGB1_SwBm" ,   "LN_Met_B_c09_DUSP4_AtM",
-                                                                              "Cancer_B_c08_ITGB1_SwBm","Cancer_B_c09_DUSP4_AtM"))
+countexp.Seurat$type_celltype=factor(countexp.Seurat$type_celltype,levels = c("Blood_B.08.ITGB1+SwBm" ,    "Blood_B.09.DUSP4+AtM",
+                                                                              "Adjacent_B.08.ITGB1+SwBm",  "Adjacent_B.09.DUSP4+AtM",
+                                                                              "LN_Met_B.08.ITGB1+SwBm" ,   "LN_Met_B.09.DUSP4+AtM",
+                                                                              "Cancer_B.08.ITGB1+SwBm","Cancer_B.09.DUSP4+AtM"))
 input.pathway<-c("D-Glutamine and D-glutamate metabolism")
 input.pathway<-rownames(significance_pathway)
 input.pathway<-significance_pathway
 DotPlot.metabolism(obj = countexp.Seurat, pathway = input.pathway, phenotype = "cancer", norm = "y")+
-  scale_x_discrete(limits=as.character(c("Blood_B_c08_ITGB1_SwBm" ,    "Blood_B_c09_DUSP4_AtM",
-                                         "Adjacent_B_c08_ITGB1_SwBm",  "Adjacent_B_c09_DUSP4_AtM",
-                                         "LN_Met_B_c08_ITGB1_SwBm" ,   "LN_Met_B_c09_DUSP4_AtM",
-                                         "Cancer_B_c08_ITGB1_SwBm","Cancer_B_c09_DUSP4_AtM")))+
+  scale_x_discrete(limits=as.character(c("Blood_B.08.ITGB1+SwBm" ,    "Blood_B.09.DUSP4+AtM",
+                                         "Adjacent_B.08.ITGB1+SwBm",  "Adjacent_B.09.DUSP4+AtM",
+                                         "LN_Met_B.08.ITGB1+SwBm" ,   "LN_Met_B.09.DUSP4+AtM",
+                                         "Cancer_B.08.ITGB1+SwBm","Cancer_B.09.DUSP4+AtM")))+
   scale_y_discrete(limits=as.character(c("beta-Alanine metabolism","Pyrimidine metabolism" ,"Purine metabolism","Thiamine metabolism","Tyrosine metabolism","Phenylalanine metabolism",
                                          "Other types of O-glycan biosynthesis","Glycosaminoglycan biosynthesis - keratan sulfate" ,"N-Glycan biosynthesis",
                                          "Mannose type O-glycan biosynthesis" ,"Glycosphingolipid biosynthesis - lacto and neolacto series",
@@ -95,7 +96,6 @@ Idents(objectTPN) = "type_celltype";table(Idents(objectTPN))
 ###
 library(future)
 plan("multicore", workers =1)
-#
 options(future.globals.maxSize = 10000 * 1024^2)
 
 diffpath_gene= Seurat::FindAllMarkers(objectTPN, only.pos = TRUE, min.pct = 0,logfc.threshold = 0)
@@ -116,10 +116,10 @@ colnames(vag_exp2) <- colnames(vag_exp1)
 
 vag_exp2[vag_exp2 >=2]=2
 
-vag_exp3=vag_exp2[,c("Blood_B_c08_ITGB1_SwBm" ,    "Blood_B_c09_DUSP4_AtM",
-                     "Adjacent_B_c08_ITGB1_SwBm",  "Adjacent_B_c09_DUSP4_AtM",
-                     "LN_Met_B_c08_ITGB1_SwBm" ,   "LN_Met_B_c09_DUSP4_AtM",
-                     "Cancer_B_c08_ITGB1_SwBm","Cancer_B_c09_DUSP4_AtM")]
+vag_exp3=vag_exp2[,c("Blood_B.08.ITGB1+SwBm" ,    "Blood_B.09.DUSP4+AtM",
+                     "Adjacent_B.08.ITGB1+SwBm",  "Adjacent_B.09.DUSP4+AtM",
+                     "LN_Met_B.08.ITGB1+SwBm" ,   "LN_Met_B.09.DUSP4+AtM",
+                     "Cancer_B.08.ITGB1+SwBm","Cancer_B.09.DUSP4+AtM")]
 
 vag_exp4=vag_exp3[c("GLS" ,"GLA" ,    "UGCG",    "B4GALT1",    "PLD4" ,   "PIKFYVE", "IDI1",    "INPP5F",  "ASAH1",   "ACP5",
                     "PTGES3",  "IDS" ,    "ODC1",    "PDE4D","LPIN1",   "CERS4" ,  "POLD4",   "MGAT4A",  "NT5E",    "PIP4K2A",
@@ -153,13 +153,13 @@ p1= pheatmap::pheatmap(vag_exp4,cutree_cols = 5 ,
                        gaps_col = c(1,2,3,4,5,6,7,8#,9,10,11#,12,
                                     #13,14,15,16,17,18,19,20,
                                     #21,22,23,24,25,26,27,28,29,30
-                       )#
+                       )
 );p1
 dev.off()
 
 
 
-###############
+#########cancer type######
 
 input.pathway<-c("D-Glutamine and D-glutamate metabolism","Sphingolipid metabolism","Arachidonic acid metabolism")
 input.pathway<-rownames(significance_pathway)
@@ -185,7 +185,7 @@ p1=ggplot(data = b,mapping = aes(x =cancer_celltype,y =X3)) +
   geom_boxplot(mapping = aes(fill = celltype),scale = "width",outlier.shape = NA)+
   #stat_compare_means(comparisons = my_comparisons)+
   #scale_fill_npg()+
-  scale_fill_manual(values=c("B_c08_ITGB1_SwBm"='#E95C59', "B_c09_DUSP4_AtM"='#E59CC4') )+
+  scale_fill_manual(values=c("B.08.ITGB1+SwBm"='#E95C59', "B.09.DUSP4+AtM"='#E59CC4') )+
   labs(title = "D-Glutamine and D-glutamate metabolism")+facet_wrap(~X2,scales = "free_y",ncol=1)+
   xlab("celltype") + ylab("score") +#coord_cartesian(ylim = c(0, 0.3))+
   theme_classic2() + theme(#legend.position = "none",

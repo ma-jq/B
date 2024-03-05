@@ -15,7 +15,7 @@ unique(projHeme5$Clusters2)
 projHeme5$pathway <- gsub("\\d","",projHeme5$Sample)
 unique(projHeme5$pathway)
 projHeme5$pathway <- ifelse(projHeme5$pathway %in%
-                         c("COAD","STAD","GIST","BLCA"),"GC","EF")
+                         c("COAD","LC","STAD","THCA"),"GC","EF")
 table(projHeme5$pathway)
 projHeme5$Clusters3 <- paste0(projHeme5$Clusters2,'_',projHeme5$pathway)
 table(projHeme5$Clusters3)
