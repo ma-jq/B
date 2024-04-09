@@ -7,21 +7,14 @@ library(Seurat)
 addArchRThreads(threads = 10) 
 
 set.seed(12345)
-seRNA <- readRDS('./objTN221115.rds')
-anno <- readRDS('./objTN2meta221121.rds')
-#seRNA <- pbmc
-#rm(pbmc)
-seRNA <- seRNA[,intersect(colnames(seRNA),rownames(anno))]
+seRNA <- readRDS('../../scRNA_data/panB_scRNA_processed_data.rds')
 seRNA <- seRNA[,sample(colnames(seRNA),50000)]
 dim(seRNA)
 gc()
-# add celltype annotation
-
-seRNA$celltype <- anno$celltype_l7[match(colnames(seRNA),rownames(anno))]
 unique(seRNA$celltype)
 saveRDS(seRNA,file="./MERGE/scRNA_5wcell.rds")
 seRNA <- readRDS("./MERGE/scRNA_5wcell.rds")
-# rowData(gene??Ϣ), colData(ϸ????Ϣ)
+
 table(seRNA$celltype)
 ### 1 RNA Integration
 
@@ -124,7 +117,7 @@ projHeme_RNA <- addGeneIntegrationMatrix(
   nameScore = "predictedScore_Co",
   force = TRUE
 )
-### 4 ʹ??scRNA-seq??Ϣ????scATAC-seq????
+### 
 cM <- confusionMatrix(projHeme2$Clusters, projHeme2$predictedGroup_Co)
 labelOld <- rownames(cM)
 labelOld
@@ -185,9 +178,7 @@ plotPDF(p1, name = "Plot-UMAP-Remap-Clusters_Integration_Harmony.pdf", ArchRProj
 saveRDS(projHeme2,file="./MERGE/proj_RNA_integration_label_process_Harmony.rds")
 
 markerGenes <- c('PAX5','IRF4')
-# # ????????features?Ƿ?????
-# features <- getFeatures(projHeme3)
-# 'MLANA' %in% features
+#
 
 p1 <- plotEmbedding(
   ArchRProj = projHeme2,

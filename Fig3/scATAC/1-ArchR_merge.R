@@ -4,16 +4,15 @@ library(data.table)
 library(parallel)
 set.seed(123)
 setwd("./")
-Sys.getenv("RHDF5_USE_FILE_LOCKING")
-Sys.getenv("HDF5_USE_FILE_LOCKING")
-# 
-h5disableFileLocking()
-# # h5enableFileLocking()
-# 
-rhdf5::h5errorHandling('verbose')
+# Sys.getenv("RHDF5_USE_FILE_LOCKING")
+# Sys.getenv("HDF5_USE_FILE_LOCKING")
+# # 
+# h5disableFileLocking()
+# # # h5enableFileLocking()
+# # 
+# rhdf5::h5errorHandling('verbose')
 
 # Read in Arrow files
-# ArrowFiles <- c(list.files(path = "/media/ggj/myqFiles/ATAC_res/Data/0413_merge/MERGE-Bin-5k/ArrowFiles/", pattern = 'Thymus', recursive = F, full.names = T))
 
 file.dir <- "./ATAC/"
 Tissue.use <- '.arrow'
@@ -27,10 +26,6 @@ ArrowFiles <- c(
   list.files(path = paste0(file.dir, "result_THCA13"), pattern = Tissue.use, full.names = T),
   list.files(path = paste0(file.dir, "result_LC19"), pattern = Tissue.use, full.names = T),
   list.files(path = paste0(file.dir, "result_HCC136"), pattern = Tissue.use, full.names = T)
-  # list.files(path = paste0(file.dir, "p53_14-10/Arrow_Bin5000/"), pattern = Tissue.use, full.names = T),
-  # list.files(path = paste0(file.dir, "WT_16-11/Arrow_Bin5000/"), pattern = Tissue.use, full.names = T),
-  # list.files(path = paste0(file.dir, "WT_16-2/Arrow_Bin5000/"), pattern = Tissue.use, full.names = T),
-  # list.files(path = paste0(file.dir, "WT_0/Arrow_Bin5000/"), pattern = Tissue.use, full.names = T)
 )
 
 ArrowFiles
@@ -69,8 +64,7 @@ proj <- proj[proj$TSSEnrichment > 10 & proj$nFrags > 1000 ,]
 proj
 proj <- filterDoublets(proj)
 proj
-# proj2 <- proj[proj$TSSEnrichment > 5 & proj$nFrags > 3000,]
-# proj <- proj[proj$TSSEnrichment > 7 & proj$nFrags > 1000,]
+
 bc.use <- proj@cellColData@rownames
 save(bc.use, file = "bc_use.RData")
 
@@ -151,12 +145,7 @@ batchname <- batchname$batch
 cancer <- batchname
 cancer$batch <- gsub("\\d","",cancer$batch)
 proj$cancer <- cancer$batch
-#batchname <- colsplit(batchname, "_", names = c("tissue", "mouse", "num"))
-#batchname$group <- ifelse(batchname$mouse %in% c("16-11", "16-2", "0"), "WT", "P53")
 
-# proj$tissue <- batchname$tissue
-# proj$mouse <- batchname$mouse
-# proj$group <- batchname$group
 proj$Sample
 
 library(ggplot2)
@@ -378,12 +367,7 @@ library(reshape2)
 
 batchname <- colsplit(proj$cellNames, "#", names = c("batch", "bc"))
 batchname <- batchname$batch
-#batchname <- colsplit(batchname, "_", names = c("tissue", "mouse", "num"))
-#batchname$group <- ifelse(batchname$mouse %in% c("16-11", "16-2", "0"), "WT", "P53")
 
-# proj$tissue <- batchname$tissue
-# proj$mouse <- batchname$mouse
-# proj$group <- batchname$group
 proj$Sample
 
 library(ggplot2)

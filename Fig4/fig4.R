@@ -25,7 +25,7 @@ my36colors <-c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3',
 #'                   Manuscipt: figure4D&E;S8J&K                             '#
 ###############################################################################
 
-data <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+data <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 Idents(data) <- data$celltype
 data <- subset(data,idents=c("B.14.Plasmablast","B.15.Plasma cell"),invert=TRUE)
 ##
@@ -35,7 +35,7 @@ scdata_sample <- data[,cellname]
 DimPlot(scdata_sample)
 scdata_sample <- FindVariableFeatures(scdata_sample)
 #remove noncoding
-genes<-data.frame(data.table::fread("../Additional_data/biomart_mart_export.txt",header=T,sep="\t"))
+genes<-data.frame(data.table::fread("./Additional_data/biomart_mart_export.txt",header=T,sep="\t"))
 
 table(genes$GeneType)
 genes_sub<-subset(genes,GeneType!="lncRNA") #processed_pseudogene lncRNA
@@ -46,7 +46,7 @@ scdata_sample@assays$RNA@var.features = scdata_sample@assays$RNA@var.features[(s
 dim(scdata_sample)
 
 ####WYC blacklist
-load("../Additional_data/genes_black_WYC.rda")
+load("./Additional_data/genes_black_WYC.rda")
 sum(scdata_sample@assays$RNA@var.features %in% genes_black); length(scdata_sample@assays$RNA@var.features)
 scdata_sample@assays$RNA@var.features = scdata_sample@assays$RNA@var.features[!(scdata_sample)]
 mito.genes <- rownames(scdata_sample@assays$RNA)[grep("^MT-",rownames(scdata_sample@assays$RNA))]
@@ -340,7 +340,7 @@ ggsave("./module_featureplot.pdf",width = 40,height = 6)
 ###############################################################################
 #'                       Manuscipt: figureS8B                                '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 Idents(object) <- object$celltype
 unique(object$celltype)
 object <- subset(object,idents=c("B.01.TCL1A+naiveB","B.08.ITGB1+SwBm",
@@ -382,7 +382,7 @@ dev.off()
 ###############################################################################
 #'                       Manuscipt: figureS8C                                '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 Idents(object)="celltype";table(Idents(object))
 B89=subset(object,idents=c("B.09.DUSP4+AtM","B.08.ITGB1+SwBm"))
 table(B89$c_call)
@@ -443,7 +443,7 @@ ggsave("FigS8C.pdf",width = 12,height = 8)
 ###############################################################################
 #'                       Manuscipt: figureS8F                                '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 Idents(object) <- object$celltype
 unique(object$celltype)
 object <- subset(object,idents=c("B.01.TCL1A+naiveB","B.08.ITGB1+SwBm",
@@ -488,7 +488,7 @@ ggsave("FigS8F.pdf",width = 8,height = 8)
 #'                      Manuscipt: figureS8G&H                               '#
 ###############################################################################
 
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 Idents(object) <- object$celltype
 object <- subset(object,idents=c("B.01.TCL1A+naiveB","B.08.ITGB1+SwBm",
                                  "B.09.DUSP4+AtM","B.12.LMO2+LZ_GCB","B.11.SUGCT+DZ_GCB",

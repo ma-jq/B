@@ -15,7 +15,7 @@ library(clusterProfiler)
 ###############################################################################
 #'                          Manuscipt: figure6A                             '#
 ###############################################################################
-objN <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+objN <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 Idents(objN)="celltype";table(Idents(objN))
 objectTP=subset(objN,idents=c("B.08.ITGB1+SwBm",   "B.09.DUSP4+AtM"))
 ####

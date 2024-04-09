@@ -40,7 +40,7 @@ if(T){
 #'                          Manuscipt: figure1B                              '#
 ###############################################################################
 
-###modify SelectIntegrationFeatures function from Seurat package
+###We modify SelectIntegrationFeatures function from Seurat package
 SelectIntegrationFeatures <- function (object.list, nfeatures = 2000, assay = NULL, verbose = TRUE, 
           fvf.nfeatures = 2000, ...) {
   if (!is.null(x = assay)) {
@@ -124,10 +124,10 @@ dim(data)
 objTN2 <- CreateSeuratObject(data@assays$RNA@counts,meta.data = data@meta.data,
                              min.cells = 3)
 summary(objTN2$nFeature_RNA)
-dim(objTN2)
-rm(data)
-rm(data2)
-gc()
+# dim(objTN2)
+# rm(data)
+# rm(data2)
+# gc()
 
 table(objTN2$dataid)
 objTN2$dataset <- objTN2$dataid
@@ -149,7 +149,7 @@ objTN2_bak <- objTN2
 objTN2 <- objTN2_bak
 objTN2@assays$RNA@var.features <- get(feature_type[1])
 #remove noncoding
-genes<-data.frame(data.table::fread("../Additional_data/biomart_mart_export.txt",header=T,sep="\t"))
+genes<-data.frame(data.table::fread("./Additional_data/biomart_mart_export.txt",header=T,sep="\t"))
   
 table(genes$GeneType)
 genes_sub<-subset(genes,GeneType!="lncRNA") #processed_pseudogene lncRNA
@@ -160,7 +160,7 @@ objTN2@assays$RNA@var.features = objTN2@assays$RNA@var.features[(objTN2@assays$R
 dim(objTN2)
   
 ####WYC blacklist
-load("../Additional_data/genes_black_WYC.rda")
+load("./Additional_data/genes_black_WYC.rda")
 sum(objTN2@assays$RNA@var.features %in% genes_black); length(objTN2@assays$RNA@var.features)
 objTN2@assays$RNA@var.features = objTN2@assays$RNA@var.features[!(objTN2@assays$RNA@var.features %in% genes_black)]
 mito.genes <- rownames(objTN2@assays$RNA)[grep("^MT-",rownames(objTN2@assays$RNA))]
@@ -187,7 +187,7 @@ DimPlot(objTN2,group.by = "seurat_clusters",label=T,cols = my36colors)
 ###############################################################################
 #'                          Manuscipt: figure1C                              '#
 ###############################################################################
-objTN2 <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+objTN2 <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 B_marker= c("TCL1A","FCER2","IL4R","IGHD" , ####NaiveB
             "IFIT3","IFI44L","STAT1","ISG15",###IFN
             "HSPA1A","DNAJB1",###Activated
@@ -214,9 +214,9 @@ DotPlot(object = objTN2, features =  B_marker,scale = T,group.by = "celltype") +
 ###############################################################################
 #'                          Manuscipt: figure1D&F                            '#
 ###############################################################################
-load("../Additional_data/color.B.Rdata")
+load("./Additional_data/color.B.Rdata")
 
-object_BCR <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object_BCR <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 dim(object_BCR)
 object=object_BCR
 
@@ -333,7 +333,7 @@ if(T){
     return(count.dist.melt.ext.tb)
   }
 }
-objN <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+objN <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 out.prefix <- "./"
 OR.B.list <- do.tissueDist(cellInfo.tb=objN@meta.data,meta.cluster=objN@meta.data$celltype,loc=objN@meta.data$type,
                            out.prefix=sprintf("%s/objN_type",out.prefix),
@@ -361,417 +361,12 @@ sscVis::plotMatrix.simple(or,
                           pdf.width = 6, pdf.height = 8)
 
                           
-###############################################################################
-#'                          Manuscipt: figureS2F&G                           '#
-###############################################################################
-# muscat ------------------------------------------------------------------
-
-##We downsampled AtM cells from pan-cancer dataset in order to keep cell numbers comparable
-Atm <- readRDS("../external_data/AtM_comparsion_scRNA_data.rds")
-DefaultAssay(Atm) <- "RNA"
-Idents(Atm) <- Atm$TYPE
-table(Atm$TYPE)
-patient <- as.data.frame(table(Atm$patient))
-#Cancer vs AID
-Atm1 <- subset(Atm,idents=c("AID","panC"))
-dim(Atm1)
-table(Atm1$patient)
-AtM_sce <- as.SingleCellExperiment(Atm1) 
-AtM_sce$group_id <- AtM_sce$TYPE
-AtM_sce$sample_id <- AtM_sce$patient
-AtM_sce$cluster_id <- "AtM"
-AtM_sce <- prepSCE(AtM_sce,
-                   kid = "cluster_id",
-                   sid = "sample_id",
-                   gid = "group_id",
-                   drop = FALSE)
-
-table(AtM_sce$group_id,AtM_sce$sample_id)
-pb <- aggregateData(AtM_sce,
-                    assay="counts",
-                    fun="sum",
-                    by=c('cluster_id','sample_id'))
-assayNames(pb)
-t(head(assay(pb)))
-metadata(pb)
-#pb_mds <- pbMDS(pb)
-
-res <- pbDS(pb,method = "DESeq2",min_cells = 10)
-tmp <- AtM_sce
-counts(tmp) <- as.matrix(counts(tmp))
-result_table <- resDS(tmp,res,bind="row",frq=FALSE,spm=FALSE)
-result_table$compare <- ifelse(result_table$logFC>0,"panC","AID")
-write.csv(result_table, file = "result_table_panC_vs_AID_min10.csv", row.names = F)
-
-#Cancer vs HBV
-Atm1 <- subset(Atm,idents=c("HBV","panC"))
-AtM_sce <- as.SingleCellExperiment(Atm1) 
-AtM_sce$group_id <- AtM_sce$TYPE
-AtM_sce$sample_id <- AtM_sce$patient
-AtM_sce$cluster_id <- "AtM"
-AtM_sce <- prepSCE(AtM_sce,
-                   kid = "cluster_id",
-                   sid = "sample_id",
-                   gid = "group_id",
-                   drop = FALSE)
-
-table(AtM_sce$group_id,AtM_sce$sample_id)
-pb <- aggregateData(AtM_sce,
-                    assay="counts",
-                    fun="sum",
-                    by=c('cluster_id','sample_id'))
-metadata(pb)
-#pb_mds <- pbMDS(pb)
-pb_mds 
-res <- pbDS(pb,method = "DESeq2",min_cells = 10)
-tmp <- AtM_sce
-counts(tmp) <- as.matrix(counts(tmp))
-result_table <- resDS(tmp,res,bind="row",frq=FALSE,spm=FALSE)
-
-write.csv(result_table, file = "result_table_panC_vs_HBV_min10.csv", row.names = F)
-
-#volcano plot
-
-  #Atm
-  Atm <- NULL
-  for(i in 1:length(file)){
-    temp <- read.csv(file[i],row.names = 1)
-    #temp$compare <- colsplit(file[i],"marker",names=c("n1","n2"))$n1
-    #temp$compare <- colsplit(temp$compare,"_VS_",names = c("n1","n2"))$n2
-    temp$gene <- rownames(temp)
-    temp <- temp[-grep("^MT-|^IGKV",temp$gene),]
-    Atm <- rbind(Atm,temp)
-  }
-  Atm$cluster <- 'Atm'
-  Atm$sig=""
-  Atm$sig[abs(Atm$logFC) > 0.25 & Atm$p_adj.loc < 0.05] = "sig"
-  Atm$sig2=paste(Atm$cluster,Atm$sig,sep = "_")
-  Atm$sig2[str_detect(Atm$sig2,"_$")]="not_sig"
-  Atm$sig2=str_replace(Atm$sig2,"_sig","")
-  
-  Atm$sig2=factor(Atm$sig2,levels = c("not",sort(unique(Atm$cluster))))
-  Atm$cluster=factor(Atm$cluster,levels = sort(unique(Atm$cluster)))
-  Atm=Atm%>%arrange(cluster,sig2)
-  
-  max(Atm$logFC);min(Atm$logFC)
-  Atm$logFC[Atm$logFC > 7]=7
-  Atm$logFC[Atm$logFC < c(-7)]= -7
-
-  library(RColorBrewer)
-  library(scales)
-  color_ct=c(brewer.pal(12, "Set3")[-c(2,3,9,12)],
-             brewer.pal(5, "Set1")[2],
-             brewer.pal(3, "Dark2")[1])
-  names(color_ct)=sort(unique(as.character(Atm$cluster)))
-  
-  Atm %>% ggplot(aes(x=cluster,y=logFC,color=sig2))+geom_jitter(width = 0.25,size=0.5)+
-    scale_color_manual(values = c(color_ct,"not"="#dee1e6"))+
-    scale_y_continuous("average log2FC",expand = c(0.02,0))+
-    theme_bw()+
-    theme(
-      panel.grid = element_blank(),
-      legend.position = "none",
-      axis.text.x.bottom = element_text(angle = 45,hjust = 1,size = 14,color = "black"),
-      axis.text.y.left = element_text(size = 14,color = "black"),
-      axis.title.x.bottom = element_blank(),
-      axis.title.y.left = element_text(size = 16)
-    )
-  
-  Atm2=Atm
-  Atm2$padj_log10_neg= -log10(Atm2$p_adj.loc)
-  Atm2$padj_log10_neg=ifelse(Atm2$logFC > 0,
-                             Atm2$padj_log10_neg,
-                             -Atm2$padj_log10_neg)
-  
-  Atm2$label <- ifelse(abs(Atm2$logFC)>0.8,Atm2$gene,"")
-  
-  Atm2 %>% ggplot(aes(x=cluster,y=logFC,color=sig2))+geom_jitter(width = 0.25,size=0.5)+
-    scale_color_manual(values = c(color_ct,"not"="#dee1e6"))+
-    scale_y_continuous("average log2FC",expand = c(0.02,0))+
-    theme_bw()+
-    theme(
-      panel.grid = element_blank(),
-      legend.position = "none",
-      axis.text.x.bottom = element_text(angle = 45,hjust = 1,size = 14,color = "black"),
-      axis.text.y.left = element_text(size = 14,color = "black"),
-      axis.title.x.bottom = element_blank(),
-      axis.title.y.left = element_text(size = 16)
-    )+geom_label_repel( aes(label = label),
-                        size = 3,box.padding = unit(0.5, "lines"),
-                        point.padding = unit(0.8, "lines"), 
-                        segment.color = "black", 
-                        show.legend = FALSE,
-                        max.overlaps =50)
-  
-  ###################
-  plot.list=list()
-  for (ci in sort(unique(as.character(Atm2$cluster)))) {
-    tmpdf=Atm2 %>% filter(cluster == ci)
-    minabs=abs(min(tmpdf$padj_log10_neg))
-    maxabs=max(tmpdf$padj_log10_neg)
-    thre=0
-    if(minabs < maxabs) {
-      tmpdf$padj_log10_neg[tmpdf$padj_log10_neg > minabs] = minabs
-      thre=minabs
-    }
-    if(minabs > maxabs) {
-      tmpdf$padj_log10_neg[tmpdf$padj_log10_neg < (-maxabs)] = -maxabs
-      thre=maxabs
-    }
-    if(minabs == maxabs & maxabs == Inf) {
-      thre = min(
-        abs(
-          range(
-            tmpdf$padj_log10_neg[tmpdf$padj_log10_neg < Inf & tmpdf$padj_log10_neg > -Inf]
-          )
-        )
-      )
-      tmpdf$padj_log10_neg[tmpdf$padj_log10_neg < (-thre)] = -thre
-      tmpdf$padj_log10_neg[tmpdf$padj_log10_neg > thre] = thre
-    }
-    
-    plotdata = tmpdf
-    tmpdf=tmpdf%>%filter(sig2 != "not") 
-    tmpdf=tmpdf%>%arrange(desc(logFC))
-    tmpdf.a=head(tmpdf%>%filter(logFC > 0),15)
-    tmpdf.a$d=thre*2*0.05+(-thre)-tmpdf.a$padj_log10_neg
-    tmpdf.b=tail(tmpdf%>%filter(logFC < 0),15)
-    tmpdf.b$d=thre*2*0.95-thre  - tmpdf.b$padj_log10_neg
-    textdata.down = tmpdf.b
-    textdata.up   = tmpdf.a
-    
-    tmpplot=plotdata%>%ggplot(aes(x=padj_log10_neg,y=logFC))+
-      geom_point(aes(color=sig2),size=1)+
-      geom_hline(yintercept = c(-0.25,0.25),linetype="dashed")+
-      geom_text_repel(data = textdata.down,
-                      mapping = aes(label=gene),
-                      nudge_x=textdata.down$d,
-                      direction = "y", hjust = 1,segment.size = 0.2,max.overlaps = 100)+
-      geom_text_repel(data = textdata.up,
-                      mapping = aes(label=gene),
-                      nudge_x=textdata.up$d,
-                      direction = "y", hjust = 0,segment.size = 0.2,max.overlaps = 100)+
-      labs(title = ci)+
-      scale_color_manual(values = c(color_ct,"not"="#dee1e6"))+
-      scale_y_continuous("average log2FC",expand = c(0.02,0),limits = c(-8,8))+
-      theme_bw()+
-      theme(
-        panel.grid = element_blank(),
-        legend.position = "none",
-        axis.ticks.x.bottom = element_blank(),
-        #axis.text.x.bottom = element_blank(),
-        axis.title.x.bottom = element_blank(),
-        axis.text.y.left = element_text(size = 14,color = "black"),
-        axis.title.y.left = element_text(size = 16),
-        plot.title = element_text(size = 12,hjust = 0.5)
-      )
-    
-    index=which(ci == sort(unique(as.character(Atm2$cluster))))
-    if (index!=1) {
-      tmpplot=tmpplot+theme(
-        axis.title.y.left = element_blank(),
-        axis.ticks.y.left = element_blank(),
-        axis.text.y.left = element_blank()
-      )
-    }
-    if (index == length(sort(unique(as.character(Atm2$cluster))))) {
-      segment.df=data.frame(x=c(0 - thre / 5,0 + thre / 5),
-                            xend=c(-thre,thre),
-                            y=c(-3,-3),
-                            yend=c(-3,-3))
-      tmpplot=tmpplot+geom_segment(data = segment.df,
-                                   mapping = aes(x=x,xend=xend,y=y,yend=yend),
-                                   arrow = arrow(length=unit(0.3, "cm")))
-      
-    }
-    plot.list[[get("index")]]=tmpplot
-  }
-  wrap_plots(plot.list,ncol = 1)&theme(plot.margin = unit(c(0.1,0.1,0.1,0.1),"cm"))
-  ggsave("Atm_diffgene_HBV_mincell10_20231011.pdf",width = 4,height = 8)
-
-
-#GSVA
-
-Atm <- readRDS("../external/Atm_comparsion_scRNA_data.rds")
-table(Atm$TYPE)
-
-Idents(Atm) <- Atm$TYPE
-
-##########AID###############
-AID <- subset(Atm,idents = c("AID","panC"))
-expr <- AID@assays$RNA@counts
-
-
-genesets <- msigdbr(species = "Homo sapiens", category = "H") 
-genesets <- subset(genesets, select = c("gs_name","gene_symbol")) %>% as.data.frame()
-genesets <- split(genesets$gene_symbol, genesets$gs_name)
-head(genesets)
-
-
-gsva.res<- gsva(expr,genesets, method="gsva",parallel.sz=16,kcdf="Poisson") 
-saveRDS(gsva.res, "gsva_hallmarker_AID.rds")
-gsva.df <- data.frame(Genesets=rownames(gsva.res), gsva.res, check.names = F)
-write.csv(gsva.df, "gsva_hallmarker_AID.csv", row.names = F)
-gsva.df[1:3,1:3]
-
-gsva.res=gsva.res
-gsva=gsva.df
-
-
-ac <- data.frame(group=AID$TYPE) 
-design <- model.matrix(~ 0 + factor(ac$group))
-colnames(design) <- levels(factor(ac$group))
-# rownames(design) <- colnames(sub_regulonAUC)
-head(design)
-
-library(limma)
-contrast.matrix <- makeContrasts(panC - AID, levels = design)
-
-
-fit <- lmFit(gsva.res, design)
-fit2 <- contrasts.fit(fit, contrast.matrix)
-fit2 <- eBayes(fit2)
-x <- topTable(fit2, coef = 1, n = Inf, adjust.method = "BH", sort.by = "P")
-head(x)
-
-
-
-pathway <- str_replace(row.names(x), "HALLMARK_", "")
-df <- data.frame(ID = pathway, score = x$t)
-head(df)
-#write.csv(df, "./GSVA/enrich_B_Hall.csv", quote = F, row.names = F)
-
-
-cutoff <- 0
-df$group <- cut(df$score, breaks = c(-Inf, cutoff, Inf),labels = c(1,2))
-head(df)
-
-sortdf <- df[order(df$score),]
-sortdf$ID <- factor(sortdf$ID, levels = sortdf$ID)
-head(sortdf)
-top2=rbind(head(sortdf,n=10),tail(sortdf,n=10))
-
-##  
-p1=ggplot(top2, aes(ID, score, fill = group)) + geom_bar(stat = 'identity') + 
-  coord_flip() + 
-  scale_fill_manual(values = c('#bf79a8', '#f2cdc1'), guide = FALSE) + 
-  
-  geom_hline(yintercept = c(-1,1), 
-             color="white",
-             linetype = 2, 
-             size = 0.3) + 
-  
-  geom_text(data = subset(top2, score < 0),
-            aes(x=ID, y= 0.1, label=ID, color = group),
-            size = 4, 
-            hjust = "inward" ) +  
-  geom_text(data = subset(top2, score > 0),
-            aes(x=ID, y= -0.1, label= paste0(" ", ID), color = group),
-            size = 4, hjust = "outward") +  
-  scale_colour_manual(values = c("black","black"), guide = FALSE) +
-  
-  xlab("") +ylab("t value of GSVA score")+
-  theme_bw() + 
-  theme(panel.grid =element_blank()) + 
-  theme(panel.border = element_rect(size = 0.6)) + 
-  theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank());p1 
-
-p1
-
-
-ggsave("gsva_hallmarker_AID_TOP20.pdf", width = 10, height = 8)
-
-
-############HBV#############
-HBV <- subset(Atm,idents = c("HBV","panC"))
-expr <- HBV@assays$RNA@counts
-#dir.create("./diffgene/GSVA")
-
-###
-genesets <- msigdbr(species = "Homo sapiens", category = "H") 
-genesets <- subset(genesets, select = c("gs_name","gene_symbol")) %>% as.data.frame()
-genesets <- split(genesets$gene_symbol, genesets$gs_name)
-head(genesets)
-
-#
-gsva.res<- gsva(expr,genesets, method="gsva",parallel.sz=20) 
-saveRDS(gsva.res, "gsva_hallmarker_HBV.rds")
-gsva.df <- data.frame(Genesets=rownames(gsva.res), gsva.res, check.names = F)
-write.csv(gsva.df, "gsva_hallmarker_HBV.csv", row.names = F)
-gsva.df[1:3,1:3]
-
-
-gsva.res=gsva.res
-gsva=gsva.df
-olnames(objectTPN)
-
-
-ac <- data.frame(group=HBV$TYPE) 
-design <- model.matrix(~ 0 + factor(ac$group))
-colnames(design) <- levels(factor(ac$group))
-# rownames(design) <- colnames(sub_regulonAUC)
-head(design)
-
-
-library(limma)
-
-contrast.matrix <- makeContrasts(panC-HBV, levels = design)
-
-fit <- lmFit(gsva.res, design)
-fit2 <- contrasts.fit(fit, contrast.matrix)
-fit2 <- eBayes(fit2)
-x <- topTable(fit2, coef = 1, n = Inf, adjust.method = "BH", sort.by = "P")
-head(x)
-
-
-pathway <- str_replace(row.names(x), "HALLMARK_", "")
-df <- data.frame(ID = pathway, score = x$t)
-head(df)
-#write.csv(df, "./GSVA/enrich_B_Hall.csv", quote = F, row.names = F)
-
-cutoff <- 0
-df$group <- cut(df$score, breaks = c(-Inf, cutoff, Inf),labels = c(1,2))
-head(df)
-
-sortdf <- df[order(df$score),]
-sortdf$ID <- factor(sortdf$ID, levels = sortdf$ID)
-head(sortdf)
-top2=rbind(head(sortdf,n=10),tail(sortdf,n=10))
-
-
-p1=ggplot(top2, aes(ID, score, fill = group)) + geom_bar(stat = 'identity') + 
-  coord_flip() + 
-  scale_fill_manual(values = c('#bf79a8', '#f2cdc1'), guide = FALSE) + 
-
-  geom_hline(yintercept = c(-1,1), 
-             color="white",
-             linetype = 2, 
-             size = 0.3) + 
-  geom_text(data = subset(top2, score < 0),
-            aes(x=ID, y= 0.1, label=ID, color = group),
-            size = 4, 
-            hjust = "inward" ) +  
-  geom_text(data = subset(top2, score > 0),
-            aes(x=ID, y= -0.1, label= paste0(" ", ID), color = group),
-            size = 4, hjust = "outward") +  
-  scale_colour_manual(values = c("black","black"), guide = FALSE) +
-  
-  xlab("") +ylab("t value of GSVA score")+
-  theme_bw() + 
-  theme(panel.grid =element_blank()) + 
-  theme(panel.border = element_rect(size = 0.6)) + 
-  theme(axis.line.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank());p1 
-
-p1
-
-ggsave("gsva_hallmarker_HBV_TOP20.pdf", width = 10, height = 8)
-
 
 
 ###############################################################################
 #'                          Manuscipt: figureS2H                             '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 new<-object@meta.data
 colnames(new)
 dplyr::select(new,c("cell_id","c_call","clone_id")) %>% head()
@@ -822,7 +417,7 @@ ggsave("./FigS2H.pdf",width = 10,height = 15)
 ###############################################################################
 #'                          Manuscipt: figureS3A                             '#
 ###############################################################################
-data <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+data <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 dir.metaInfo <- "./dataFreq/"
 dir.create((dir.metaInfo),F,T)
 
@@ -910,7 +505,7 @@ p <- ggboxplot(dat.diversity.norm.perSample.tb,x="type",y="diversity",xlab="",
 ###############################################################################
 #'                          Manuscipt: figureS3B                             '#
 ###############################################################################
-obj_bcr <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+obj_bcr <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 ####Diversity analysis###########
 Idents(obj_bcr)="celltype";table(Idents(obj_bcr))
 obj_ASC <- subset(obj_bcr,idents=c("B.15.Plasma cell","B.14.Plasmablast"))
@@ -954,12 +549,12 @@ ggsave("Top150 type diversity.pdf",width = 4,height = 5)
 ###############################################################################
 #'                          Manuscipt: figureS3C                             '#
 ###############################################################################
-object <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+object <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 anno <- object@meta.data
 rm(object)
 gc()
 
-PC <- readRDS("../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
+PC <- readRDS("../../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
 cellname.PC <- colnames(PC)
 rm(PC)
 gc()
@@ -1058,7 +653,7 @@ ggsave("FigS3C.pdf",width = 10,height = 5)
 #'                          Manuscipt: figureS3E                             '#
 ###############################################################################
 set.seed(123)
-objN <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+objN <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 input.num = 100000
 cellid<-sample(1:ncol(objN), input.num, replace=F); length(cellid)
 obj_random2w<-objN[,cellid]
@@ -1172,7 +767,7 @@ umapColor <- c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3',
 )
 my12colors<-c("#9ED9EA","#B1D896","#DAC0DD","#FDC37E","#F7A7A8","#008FC5","#ABA9AA","#06AC4B","#F68C1F","#D897C2","#F9AC8A","#42BC99")
 maumapColor=my12colors
-objN_PC <- readRDS("../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
+objN_PC <- readRDS("../../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
 
 Idents(objN_PC) <- objN_PC$celltype_l4
 allObj <- list(PC = objN_PC)
@@ -1227,7 +822,7 @@ for(oi in 1:length(allObj)){
 ###############################################################################
 #'                          Manuscipt: figureS3G                             '#
 ###############################################################################
-data_raw <- readRDS("../scRNA_data/panB_scRNA_processed_data.rds")
+data_raw <- readRDS("../../scRNA_data/panB_scRNA_processed_data.rds")
 cellname <- sample(colnames(data_raw),50000)
 data.sample <- data_raw[,cellname]
 DimPlot(data.sample,label=T,group.by = "celltype")
@@ -1291,7 +886,7 @@ ggsave("monocle3_FigS3G.pdf",width = 20,height = 8)
 DimPlot_theme<-theme_bw()+theme(aspect.ratio=0.4, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 set.seed(123)
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 object$celltype <- factor(object$celltype,
                                levels = unique(object$celltype)[order(unique(object$celltype))])
 type <- unique(object$type)
@@ -1382,7 +977,7 @@ ggsave("jaccard.pdf",width = 35,height = 8)
 
 ############
 # overlap BCR ids
-BCR <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+BCR <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 BCR@meta.data[1:3,]
 table(BCR$celltype)
 
@@ -1489,7 +1084,7 @@ for (j in 1:length(all.celltype)){
 ###############################################################################
 #'                         Manuscipt: figureS3J                              '#
 ###############################################################################
-BCR <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+BCR <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 dim(BCR)
 Idents(BCR) <- BCR$celltype
 unique(BCR$celltype)

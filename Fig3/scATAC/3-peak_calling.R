@@ -5,13 +5,13 @@ library(data.table)
 library(parallel)
 set.seed(123)
 addArchRThreads(threads = 10) 
-Sys.getenv("RHDF5_USE_FILE_LOCKING")
-Sys.getenv("HDF5_USE_FILE_LOCKING")
-# 
-h5disableFileLocking()
-# # h5enableFileLocking()
-# 
-rhdf5::h5errorHandling('verbose')
+# Sys.getenv("RHDF5_USE_FILE_LOCKING")
+# Sys.getenv("HDF5_USE_FILE_LOCKING")
+# # 
+# h5disableFileLocking()
+# # # h5enableFileLocking()
+# # 
+# rhdf5::h5errorHandling('verbose')
 proj <- readRDS("./MERGE/proj_RNA_integration_label_process_Harmony.rds")
 
 # call peak
@@ -36,25 +36,21 @@ saveRDS(proj2,file = './MERGE/proj_callpeak_Harmony.rds')
 proj2 <- readRDS("./MERGE/proj_callpeak_Harmony.rds")
 
 ### 4 Annotate based on gene scores
-## 01.根据基因评分来识别标记基因
+## 
 markersGS <- getMarkerFeatures(
   ArchRProj = proj2,
   useMatrix = 'GeneScoreMatrix',
   groupBy = 'Clusters2',
   bias = c('TSSEnrichment','log10(nFrags)'),
   testMethod = 'wilcoxon'
-  # useGroups = 'C11', #
-  # bgdGroups = 'C7' #
 )
-markersGS #返回一个SummarizedExperiment对象：行基因，列样本，包含1或多个assay
+markersGS #
 markerList <- getMarkers(markersGS, cutOff = 'FDR <= 0.01 & Log2FC >= 0.5')
-markerList$C6  #查看第6个cluster的marker特征
-# #排序
-#markers <- markers[order(markers$cluster, -markers$avg_log2FC, markers$p_val),]
+
 write.csv(markerList, file = './MERGE/markerList_integration_Harmony.csv',quote = F)
 
-## 02.Heatmap-同时可视化所有标记特征
-# 挑选要label的marker
+## 02.Heatmap
+# 
 markerGenes <- c('CD79A','MS4A1',
                  'CD9','SOX4',
                  'TCL1A','CREM',
@@ -131,9 +127,7 @@ dev.off()
 
 
 ## 03.featureplot to visualize marker genes
-## 使用MAGIC分配marker基因
-#(由于scATAC-seq数据稀疏性，可以用MAGIC来分配基因评分使相邻细胞的信号更加平滑)
-#大大提升基因分数的可视化的解释
+
 proj2 <- addImputeWeights(proj2)
 p <- plotEmbedding(
   ArchRProj = proj2,
@@ -161,7 +155,7 @@ plotPDF(plotList = p,
         addDOC = FALSE, width = 5, height = 5)
 
 
-## 04.使用ArchRBrowser画tracks
+## 04tracks
 p <- plotBrowserTrack(
   ArchRProj = proj2,
   groupBy = 'Clusters2',
@@ -176,7 +170,7 @@ plotPDF(plotList = p,
         name = 'Plot-Tracks-Marker-Genes.pdf',
         ArchRProj = proj2,
         addDOC = FALSE, width = 5, height = 5)
-##### 启动ArchRBrowser
+#####
 ArchRBrowser(projHeme)
 
 
@@ -212,7 +206,7 @@ for(i in 1:length(markerList)){
 marker_peak <- marker_peak[order(marker_peak$cluster,marker_peak$FDR,-marker_peak$Log2FC),]
 library(openxlsx)
 write.xlsx(marker_peak,file="./MERGE/markerList_integration_Harmony_peak_geneanno.xlsx",quote = F)
-# #排序
+# 
 #markers <- markers[order(markers$cluster, -markers$avg_log2FC, markers$p_val),]
 write.csv(markerList, file = './MERGE/markerList_integration_Harmony_peak.csv',quote = F)
 

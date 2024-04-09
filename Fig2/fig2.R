@@ -56,9 +56,9 @@ my36colors <-c('#E5D2DD', '#53A85F', '#F1BB72', '#F3B1A0', '#D6E7A3', '#57C3F3',
 ###############################################################################
 
 
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 
-dir.startrac <- "../Additional_data/"
+dir.startrac <- "./Additional_data/"
 dir.create(dir.startrac,F,T)
 
 Idents(object)="type";table(Idents(object))
@@ -119,7 +119,7 @@ if(!file.exists(sprintf("%s/B.out.startrac.total.cancer.level.rds",dir.startrac)
 ###############################################################################
 #'                      Define EF&GC derived ASCs                            '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 dim(object)
 Idents(object) <- object$celltype
 
@@ -188,13 +188,13 @@ table(object$groupn,object$cancer)
 data.plot <- object@meta.data
 data.plot <- data.plot[data.plot$groupn%in%c("EF","GC")&
                          data.plot$celltype_l5%in%c("PC","PB"),]
-saveRDS(data.plot,file = "cell_level_EF_GC_anno.rds")
+saveRDS(data.plot,file = "./Additional_data/cell_level_EF_GC_anno.rds")
 
 ###############################################################################
 #'                         Manuscipt: figure2D                               '#
 ###############################################################################
 
-out <- readRDS("../Additional_data/B.out.startrac_alltype.nperm100.rds")
+out <- readRDS("./Additional_data/B.out.startrac_alltype.nperm100.rds")
 
 pIndex.sig.tran <- as.data.table(out$pIndex.sig.tran)
 
@@ -224,7 +224,7 @@ ggsave(sprintf("%sFig2D.%s.pdf",out.prefix,"PCs"),width=5.5,height=4.5)
 ###############################################################################
 #'                           Manuscipt: figure2G                             '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 atm=subset(object,celltype == "B.09.DUSP4+AtM");table(atm$celltype)
 b=table(atm$clone_id,atm$type) %>% as.data.frame()
 b2=reshape2::dcast(b,Var1~Var2);dim(b2)
@@ -299,7 +299,7 @@ if(T){
 #'                             Manuscipt: figure2H                           '#
 ###############################################################################
 
-dat.startrac <- readRDS("../Additional_data/B.out.startrac.total.cancer.level.rds")
+dat.startrac <- readRDS("./Additional_data/B.out.startrac.total.cancer.level.rds")
 z.max <- 2.5
 
 ####### pIndex (tran)
@@ -358,8 +358,8 @@ dev.off()
 ###############################################################################
 
 ####We use label transfer strategy to annotate ASCs without shared clone id
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-cell_level <- readRDS("../Additional_data/cell_level_EF_GC_anno.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+cell_level <- readRDS("./Additional_data/cell_level_EF_GC_anno.rds")
 
 
 ###reference
@@ -430,14 +430,14 @@ anno.use <- anno.use[anno.use$type3%in%type$Var1,]
 saveRDS(anno.use,file="BCR_label_transfer_result.rds")
 
 #####define EF&GC domaint patient by SHM&EF index
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 anno <- object@meta.data
 unique(anno$celltype)
 anno <- anno[anno$celltype%in%c("B.15.Plasma cell","B.14.Plasmablast"),]
 data.SHM <- aggregate(anno[,"mu_freq"],by=list(anno$patient),mean)  
 colnames(data.SHM) <- c("patient","SHM_mean")
 
-ASC_cell_level <- readRDS("../Additional_data/BCR_label_transfer_result.rds")
+ASC_cell_level <- readRDS("./Additional_data/BCR_label_transfer_result.rds")
 PC_cell_level <- ASC_cell_level[ASC_cell_level$celltype=="B.15.Plasma cell",]
 data <- as.data.frame(table(PC_cell_level$groupn,PC_cell_level$patient))
 data <- dcast(data,Var1~Var2)
@@ -475,7 +475,7 @@ fviz_gap_stat(gap_stat)
 kmeans_result <- kmeans(features,centers = 2,nstart = 20)
 result <- as.data.frame(kmeans_result$cluster)
 result$groupn <- ifelse(result$`kmeans_result$cluster`==1,"EF","GC")
-write.csv(result,file="../Additional_data/kmeans_result.csv")
+write.csv(result,file="./Additional_data/kmeans_result.csv")
 ##plot
 p1 <- fviz_cluster(kmeans_result,data=features,
                    ellipse.type = "euclid",
@@ -484,7 +484,7 @@ p1
 ggsave("kmeans_result.pdf",width = 6,height = 6)
 
 ##plot ptrans result 
-data <- readRDS("../Additional_data/B.out.startrac_alltype.nperm100.rds")
+data <- readRDS("../../Additional_data/B.out.startrac_alltype.nperm100.rds")
 plot.data <- data$pIndex.tran
 plot.data <- plot.data[!plot.data$aid=="panC",]
 plot.data <- plot.data[plot.data$majorCluster=="ASC",]
@@ -532,11 +532,11 @@ saveRDS(row_cluster,file="BCR_EF_GC_patient_level_by_ptrans.rds")
 
 ####We use patients defined consistent from two methods
 ###kmeans result
-kmeans <- read.csv("../Additional_data/kmeans_result.csv",
+kmeans <- read.csv("./Additional_data/kmeans_result.csv",
                    row.names = 1)
 kmeans$type <- paste0(rownames(kmeans),"_",kmeans$groupn)
 ###ptrans result
-ptrans <- readRDS("../Additional_data/BCR_EF_GC_patient_level_by_ptrans.rds")
+ptrans <- readRDS("./Additional_data/BCR_EF_GC_patient_level_by_ptrans.rds")
 ptrans$type <- paste0(rownames(ptrans),"_",ptrans$groupn)
 ###
 patient <- intersect(kmeans$type,ptrans$type)
@@ -547,14 +547,14 @@ patient_GC <- patient[patient$groupn=="GC",]$patient
 patient <- list()
 patient[['EF']] <- patient_EF
 patient[['GC']] <- patient_GC
-saveRDS(patient,file="../Additional_data/EF_GC_patient_final_use.rds")
+saveRDS(patient,file="./Additional_data/EF_GC_patient_final_use.rds")
 ###############################################################################
 #'                           Manuscipt: figure2I&J                           '#
 ###############################################################################
 ###Fig 2I
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 Idents(object) <- object$celltype 
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 
 anno_all <- object@meta.data
 anno.use <- anno_all
@@ -612,8 +612,8 @@ ggsave("Fig2J.pdf",width = 6,height = 4)
 ###############################################################################
 #'                           Manuscipt: figure2K                             '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 Idents(object) <- object$celltype
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                          ifelse(object$patient%in%patient$GC,"GC","others"))
@@ -737,7 +737,7 @@ ggsave("Fig2K_ASC_GC_Cancer.pdf",width=4,height=3)
 ###############################################################################
 #'                           Manuscipt: figure2L                             '#
 ###############################################################################
-PC <- readRDS("../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
+PC <- readRDS("../../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
 
 #monocle3
 PC_obj_mnc3 = PC
@@ -793,7 +793,7 @@ plot_cells(cds,
 
 ########cytotrace
 #cellname <- sample(colnames(PC),30000)
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 PC$groupn <- ifelse(PC$patient%in%patient$EF,"EF",
                     ifelse(PC$patient%in%patient$GC,"GC","others"))
 cellname <- colnames(PC)[PC$groupn%in%c("EF","GC")]
@@ -854,8 +854,8 @@ ggsave("CytoTRACE_Boxplot_modify.pdf",width = 10,height = 6)
 ###############################################################################
 #'                           Manuscipt: figureS5B                            '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                     ifelse(object$patient%in%patient$GC,"GC","others"))
 anno <- object@meta.data
@@ -907,8 +907,8 @@ ggsave("FigS5B.pdf",width = 4,height = 5)
 ###############################################################################
 class=c("GC"="#377eb8" ,"EF"="#e41a1c")
 ####Diversity analysis###########
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
 Idents(object) <- object$celltype
@@ -967,8 +967,8 @@ ggsave("Top150 EF vs GC objectPC diversity.pdf",width = 6,height = 6)
 #'                           Manuscipt: figureS5D                            '#
 ###############################################################################
 
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
 anno <- object@meta.data
@@ -1032,8 +1032,8 @@ dev.off()
 ###############################################################################
 #'                         Manuscipt: figureS5F&G                            '#
 ###############################################################################
-object <- readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
 Idents(object) <- object$celltype
@@ -1237,8 +1237,8 @@ ggsave("FigS5G_gsva_HALLMARK.pdf", width = 10, height = 8)
 ###############################################################################
 DimPlot_theme<-theme_bw()+theme(aspect.ratio=1, panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
-object<-readRDS("../BCR_data/panB_BCR_processed_data.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+object<-readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
 object$sub_cell_type2<-object$celltype
@@ -1340,7 +1340,7 @@ ggsave("hotpoint_score.pdf",width = 10,height = 8)
 ###############################################################################
 #'                       Manuscipt: figureS5R                               '#
 ###############################################################################
-object<-readRDS("../BCR_data/panB_BCR_processed_data.rds")
+object<-readRDS("../../BCR_data/panB_BCR_processed_data.rds")
 
 Idents(object) <- object$groupn
 object2 <- subset(object,idents = c("EF","GC"))
@@ -1404,7 +1404,7 @@ for(i in 1:length(unique(object2$type))){
 #'                       Manuscipt: figureS5S                                '#
 ###############################################################################
 object <- readRDS("BCR_add_ASC_select_EF_GC_patient_level_rm_isotype_20231002.rds")
-patient <- readRDS("../Additional_data/EF_GC_patient_final_use.rds")
+patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
 Idents(object) <- object$groupn

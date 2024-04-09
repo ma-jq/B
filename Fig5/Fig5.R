@@ -52,7 +52,7 @@ cellphonedb method statistical_analysis  cellphonedb_meta.txt  cellphonedb_count
 cellphonedb plot dot_plot --means-path ./out/means.txt --pvalues-path ./out/pvalues.txt --output-path ./Outplot
 
 #######
-sel_pval = all_pval[match(selected_pairs, intr_pairs), selected_celltype]#将上述需要呈现的受配体选出来
+sel_pval = all_pval[match(selected_pairs, intr_pairs), selected_celltype]#
 sel_means = all_means[match(selected_pairs, intr_pairs), selected_celltype]
 df_names = expand.grid(selected_pairs, selected_celltype)
 pval = unlist(sel_pval)
