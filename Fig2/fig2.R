@@ -423,7 +423,7 @@ anno.use$type3 <- paste0(anno.use$type,"_",anno.use$groupn)
 table(anno.use$type3)
 table(is.na(anno.use))
 
-####filter type < 50 cell number
+####filter type < 50 cell 
 type <- as.data.frame(table(anno.use$type3))
 type <- type[type$Freq>50,]
 anno.use <- anno.use[anno.use$type3%in%type$Var1,]
@@ -1032,13 +1032,20 @@ dev.off()
 ###############################################################################
 #'                         Manuscipt: figureS5F&G                            '#
 ###############################################################################
-object <- readRDS("../../BCR_data/panB_BCR_processed_data.rds")
+object <- readRDS("../../scRNA_data/panB_Plasma_cell_selected_scRNA_processed_data.rds")
 patient <- readRDS("./Additional_data/EF_GC_patient_final_use.rds")
+Idents(object) <- object$dataid
+unique(object$dataid)
+object <- subset(object,idents=c("PCall","PCall_new","PCall_new2"))
+object$patient <- gsub("PCall_","",object$patient)
+object$patient <- gsub("B$","",object$patient)
+object$patient <- gsub("HCC31","HCC31T",object$patient)
+object$patient <- gsub("HCC32","HCC32T",object$patient)
+object$patient <- gsub("LC10","LC10T",object$patient)
+unique(object$patient)
+
 object$groupn <- ifelse(object$patient%in%patient$EF,"EF",
                         ifelse(object$patient%in%patient$GC,"GC","others"))
-Idents(object) <- object$celltype
-unique(object$celltype)
-object <- subset(object,idents=c("B.14.Plasmablast","B.15.Plasma cell"))
 
 Idents(object) <- object$groupn
 object <- subset(object,idents=c("EF","GC"))
